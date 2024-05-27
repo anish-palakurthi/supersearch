@@ -1,5 +1,5 @@
 // src/components/SearchResultItem.tsx
-import type { FC } from 'react';
+
 
 interface SearchResultItemProps {
   result: string;

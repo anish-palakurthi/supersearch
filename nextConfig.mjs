@@ -1,22 +1,25 @@
-// nextConfig.mjs
-
-import { NextConfig } from 'next';
-
+/** @type {import('next').NextConfig} */
 const nextConfig = {
-  reactStrictMode: true, // Enables React's Strict Mode
-  swcMinify: true, // Enables the SWC compiler for minification
+  reactStrictMode: true,
+  output: "export",
   images: {
-    domains: ['example.com'], // Allow images from these domains
+    unoptimized: true,
   },
-  i18n: {
-    locales: ['en', 'fr', 'es'], // Supported languages
-    defaultLocale: 'en', // Default language
+  future: {
+    // by default, if you customize webpack config, they switch back to version 4.
+    // Looks like backward compatibility approach.
+    webpack5: true,
   },
-  webpack: (config, { isServer }) => {
-    // Custom webpack configuration
-    if (!isServer) {
-      config.resolve.fallback.fs = false; // Avoid using 'fs' module on the client side
-    }
+
+  webpack(config) {
+    config.resolve.fallback = {
+      // if you miss it, all the other options in fallback, specified
+      // by next.js will be dropped.
+      ...config.resolve.fallback,
+
+      fs: false, // the solution
+    };
+
     return config;
   },
 };

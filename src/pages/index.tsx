@@ -1,5 +1,4 @@
 // src/pages/index.tsx
-
 import SpotlightSearch from '../components/SpotlightSearch';
 
 const Home: React.FC = () => {
