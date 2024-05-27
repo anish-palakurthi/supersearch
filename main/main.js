@@ -43,7 +43,9 @@ const createWindow = () => {
       preload: path.join(__dirname, "preload.js"),
       nodeIntegration: true,
     },
+
   });
+  win.setResizable(false);
 
   if (app.isPackaged) {
     appServe(win).then(() => {
