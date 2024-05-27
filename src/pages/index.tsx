@@ -1,23 +1,13 @@
-import { useState } from "react";
+// src/pages/index.tsx
 
-export default function Home() {
-  const [searchQuery, setSearchQuery] = useState<string>("");
+import SpotlightSearch from '../components/SpotlightSearch';
 
-  const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(event.target.value);
-  };
-
+const Home: React.FC = () => {
   return (
-    <div className="flex justify-center items-center min-h-screen bg-gray-100">
-      <div className="w-full max-w-lg p-4">
-        <input
-          type="text"
-          value={searchQuery}
-          onChange={handleInputChange}
-          className="w-full p-4 border border-gray-300 rounded shadow focus:outline-none focus:border-blue-500"
-          placeholder="Search..."
-        />
-      </div>
+    <div className="min-h-screen bg-gray-100 flex justify-center items-center">
+      <SpotlightSearch />
     </div>
   );
-}
+};
+
+export default Home;
