@@ -15,16 +15,6 @@ const screenshot = require('screenshot-desktop');
 // Start Express server
 require('../../backend/server');
 
-async function captureScreen() {
-  try {
-    const imgPath = path.join(os.tmpdir(), 'screenshot.png'); // Save in the OS's temporary directory
-    await screenshot({filename: imgPath});
-    return imgPath; // Return the file path
-  } catch (error) {
-    console.error("Error capturing the screen: ", error);
-    return null;
-  }
-}
 
 const appServe = app.isPackaged
   ? serve({
