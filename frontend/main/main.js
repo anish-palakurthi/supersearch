@@ -1,7 +1,7 @@
+// frontend/main/main.js
 const {
   app,
   BrowserWindow,
-  process,
   globalShortcut,
   ipcMain,
   screen,
@@ -11,6 +11,9 @@ var os = require("os");
 const path = require("path");
 const { desktopCapturer } = require('electron');
 const screenshot = require('screenshot-desktop');
+
+// Start Express server
+require('../../backend/server');
 
 async function captureScreen() {
   try {
@@ -36,14 +39,13 @@ const createWindow = () => {
     width: 360,
     height: 500,
     x: 0,
-    y: height, // Set y position to height - window height for bottom
+    y: height - 500, // Adjusted to be at the bottom but visible
     frame: false,
     transparent: true,
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
       nodeIntegration: true,
     },
-
   });
   win.setResizable(false);
 
@@ -52,7 +54,7 @@ const createWindow = () => {
       win.loadURL("app://-");
     });
   } else {
-    win.loadURL("http://localhost:3000");
+    win.loadURL("http://localhost:3000"); // Electron frontend
     //win.webContents.openDevTools();
     win.webContents.on("did-fail-load", (e, code, desc) => {
       win.webContents.reloadIgnoringCache();
@@ -82,6 +84,3 @@ app.on("window-all-closed", () => {
     // app.quit();
   }
 });
-
-
-
