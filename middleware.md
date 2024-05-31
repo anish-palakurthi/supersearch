@@ -6,3 +6,4 @@
     - the server code for handling websockets is entirely in `backend/server.js`, this is what we can use to send and listen to info back and forth
 - the app code uses the websocket context to render this information
 - ignore routes and controllers for now, they are just examples of how more complex routes can be handled
+- we can use native fetch or axios to make the http requests from the frontend
