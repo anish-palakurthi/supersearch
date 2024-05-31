@@ -1,4 +1,3 @@
-// frontend/main/main.js
 const {
   app,
   BrowserWindow,
@@ -6,21 +5,11 @@ const {
   ipcMain,
   screen,
 } = require("electron");
-const serve = require("electron-serve");
-var os = require("os");
 const path = require("path");
-const { desktopCapturer } = require('electron');
-const screenshot = require('screenshot-desktop');
+const WebSocket = require('ws');
 
 // Start Express server
 require('../../backend/server');
-
-
-const appServe = app.isPackaged
-  ? serve({
-      directory: path.join(__dirname, "../out"),
-    })
-  : null;
 
 const createWindow = () => {
   const { width, height } = screen.getPrimaryDisplay().workAreaSize;
@@ -35,21 +24,30 @@ const createWindow = () => {
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
       nodeIntegration: true,
+      contextIsolation: false, // This is necessary to use `require` in the renderer process
     },
   });
   win.setResizable(false);
 
-  if (app.isPackaged) {
-    appServe(win).then(() => {
-      win.loadURL("app://-");
-    });
-  } else {
-    win.loadURL("http://localhost:3000"); // Electron frontend
-    //win.webContents.openDevTools();
-    win.webContents.on("did-fail-load", (e, code, desc) => {
-      win.webContents.reloadIgnoringCache();
-    });
-  }
+  win.loadURL("http://localhost:3000"); // Next.js frontend
+
+  // WebSocket communication
+  const ws = new WebSocket('ws://localhost:3001');
+
+  ws.onopen = () => {
+    console.log('WebSocket connection opened');
+    ws.send('Hello from Electron client');
+  };
+
+  ws.onmessage = (event) => {
+    const data = JSON.parse(event.data);
+    console.log(data.message);
+    win.webContents.send('ws-message', data.message); // Send the message to the renderer process
+  };
+
+  ws.onclose = () => {
+    console.log('WebSocket connection closed');
+  };
 };
 
 app.on("ready", async () => {

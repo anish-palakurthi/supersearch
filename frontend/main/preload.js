@@ -7,7 +7,11 @@ contextBridge.exposeInMainWorld("electronAPI", {
   send: (channel, args) => {
     ipcRenderer.send(channel, args);
   },
+  onWebSocketMessage: (callback) => ipcRenderer.on('ws-message', (event, message) => callback(message)),
+
 });
+
+
 
 
 /*Add something here??*/
