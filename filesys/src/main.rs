@@ -79,13 +79,12 @@ fn bm25_score(doc_len: f64, avg_doc_len: f64, term_freq: f64, doc_freq: f64, num
     idf * tf
 }
 
-fn rank_files_by_bm25<'a>(index: &'a HashMap<String, FileIndex>, keyword: &'a str) -> Vec<(&'a FileIndex, f64)> {
-    let num_docs = index.len() as f64;
+fn rank_files_by_bm25<'a>(files: Vec<&'a FileIndex>, keyword: &'a str, num_docs: f64) -> Vec<(&'a FileIndex, f64)> {
     let re = Regex::new(keyword).unwrap();
     let mut doc_lengths = Vec::new();
     let mut doc_freq = 0.0;
 
-    for file in index.values() {
+    for file in &files {
         if let Some(ref content) = file.content {
             let doc_len = content.len() as f64;
             doc_lengths.push(doc_len);
@@ -97,7 +96,7 @@ fn rank_files_by_bm25<'a>(index: &'a HashMap<String, FileIndex>, keyword: &'a st
 
     let avg_doc_len: f64 = doc_lengths.iter().sum::<f64>() / doc_lengths.len() as f64;
 
-    index.values()
+    files.into_iter()
         .filter_map(|file_index| {
             if let Some(ref content) = file_index.content {
                 let doc_len = content.len() as f64;
@@ -127,7 +126,7 @@ fn main() {
     let keyword = "words words words";
     let results = search_index(&index, keyword);
 
-    let ranked_results = rank_files_by_bm25(&index, keyword);
+    let ranked_results = rank_files_by_bm25(results, keyword, index.len() as f64);
 
     println!("Ranked files:");
     for (file, score) in ranked_results {
