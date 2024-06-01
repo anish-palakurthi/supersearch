@@ -5,11 +5,10 @@ const {
   ipcMain,
   screen,
 } = require("electron");
-const path = require("path");
-const WebSocket = require('ws');
+const path = require("node:path");
 
 // Start Express server
-require('../../backend/server');
+const server = require('../../backend/server');
 
 let isWindowOpen = false;
 
@@ -41,24 +40,6 @@ const createWindow = () => {
 
   // Open the DevTools.
   win.webContents.openDevTools();
-
-  // WebSocket communication
-  const ws = new WebSocket('ws://localhost:3001');
-
-  ws.onopen = () => {
-    console.log('WebSocket connection opened');
-    ws.send('Hello from Electron client');
-  };
-
-  ws.onmessage = (event) => {
-    const data = JSON.parse(event.data);
-    console.log(data.message);
-    win.webContents.send('ws-message', data.message); // Send the message to the renderer process
-  };
-
-  ws.onclose = () => {
-    console.log('WebSocket connection closed');
-  };
 
   win.on('closed', () => {
     isWindowOpen = false;
