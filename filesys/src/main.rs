@@ -5,10 +5,30 @@ use walkdir::WalkDir;
 use regex::Regex;
 use rayon::prelude::*;
 use std::time::{SystemTime, Duration};
+use serde::{Serialize, Deserialize};
+use std::fs::File;
+use std::io::prelude::*;
 
+#[derive(Serialize, Deserialize, Debug)]
 struct FileIndex {
     path: String,
     content: Option<String>,
+}
+
+fn save_file_paths(file_paths: &Vec<PathBuf>, filename: &str) -> std::io::Result<()> {
+    let paths: Vec<String> = file_paths.iter().map(|p| p.to_string_lossy().to_string()).collect();
+    let json = serde_json::to_string(&paths)?;
+    let mut file = File::create(filename)?;
+    file.write_all(json.as_bytes())?;
+    Ok(())
+}
+
+fn load_file_paths(filename: &str) -> std::io::Result<Vec<PathBuf>> {
+    let mut file = File::open(filename)?;
+    let mut contents = String::new();
+    file.read_to_string(&mut contents)?;
+    let paths: Vec<String> = serde_json::from_str(&contents)?;
+    Ok(paths.iter().map(|p| PathBuf::from(p)).collect())
 }
 
 fn index_files_from_root(root: &str, max_size: u64) -> HashMap<String, FileIndex> {
@@ -19,41 +39,36 @@ fn index_files_from_root(root: &str, max_size: u64) -> HashMap<String, FileIndex
         .map(|entry| entry.path().to_path_buf())
         .collect();
 
+    let now = SystemTime::now();
+    let last_30_days = now - Duration::from_secs(30 * 24 * 60 * 60);
+
     file_paths
         .par_iter()
-        .map(|path| {
+        .filter_map(|path| {
             let path_str = path.to_string_lossy().to_string();
-            let now = SystemTime::now();
-            let last_30_days = now - Duration::from_secs(30 * 24 * 60 * 60);
-            let file_index = if let Ok(metadata) = fs::metadata(&path) {
+            if let Ok(metadata) = fs::metadata(&path) {
                 let accessed_recently = metadata.accessed()
                     .map(|time| time > last_30_days)
                     .unwrap_or(false);
-                if metadata.len() <= max_size {
+
+                if accessed_recently && metadata.len() <= max_size {
                     if let Ok(content) = fs::read_to_string(&path) {
-                        FileIndex {
+                        Some((path_str.clone(), FileIndex {
                             path: path_str.clone(),
                             content: Some(content),
-                        }
+                        }))
                     } else {
-                        FileIndex {
+                        Some((path_str.clone(), FileIndex {
                             path: path_str.clone(),
                             content: None,
-                        }
+                        }))
                     }
                 } else {
-                    FileIndex {
-                        path: path_str.clone(),
-                        content: None,
-                    }
+                    None
                 }
             } else {
-                FileIndex {
-                    path: path_str.clone(),
-                    content: None,
-                }
-            };
-            (path_str, file_index)
+                None
+            }
         })
         .collect()
 }
@@ -117,10 +132,58 @@ fn rank_files_by_bm25<'a>(files: Vec<&'a FileIndex>, keyword: &'a str, num_docs:
 fn main() {
     let root = "/Users/adityarai/Documents";
     let max_size = 1024 * 1024;
+    let filepath_cache = "filepaths.json";
 
     rayon::ThreadPoolBuilder::new().num_threads(10).build_global().unwrap();
 
-    let index = index_files_from_root(root, max_size);
+    let file_paths = if PathBuf::from(filepath_cache).exists() {
+        load_file_paths(filepath_cache).unwrap_or_else(|_| {
+            println!("Failed to load cached file paths. Reindexing...");
+            Vec::new()
+        })
+    } else {
+        Vec::new()
+    };
+
+    let index = if file_paths.is_empty() {
+        let index = index_files_from_root(root, max_size);
+        let paths: Vec<PathBuf> = index.keys().map(PathBuf::from).collect();
+        save_file_paths(&paths, filepath_cache).expect("Failed to save file paths");
+        index
+    } else {
+        let now = SystemTime::now();
+        let last_30_days = now - Duration::from_secs(30 * 24 * 60 * 60);
+
+        file_paths.par_iter()
+            .filter_map(|path| {
+                let path_str = path.to_string_lossy().to_string();
+                if let Ok(metadata) = fs::metadata(&path) {
+                    let accessed_recently = metadata.accessed()
+                        .map(|time| time > last_30_days)
+                        .unwrap_or(false);
+
+                    if accessed_recently && metadata.len() <= max_size {
+                        if let Ok(content) = fs::read_to_string(&path) {
+                            Some((path_str.clone(), FileIndex {
+                                path: path_str.clone(),
+                                content: Some(content),
+                            }))
+                        } else {
+                            Some((path_str.clone(), FileIndex {
+                                path: path_str.clone(),
+                                content: None,
+                            }))
+                        }
+                    } else {
+                        None
+                    }
+                } else {
+                    None
+                }
+            })
+            .collect()
+    };
+
     println!("Number of files indexed: {}", index.len());
 
     let keyword = "words words words";
