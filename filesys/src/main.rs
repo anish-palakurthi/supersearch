@@ -4,7 +4,7 @@ use std::path::PathBuf;
 use walkdir::WalkDir;
 use regex::Regex;
 use rayon::prelude::*;
-use std::time::{SystemTime, Duration};
+use std::time::{SystemTime, Duration, Instant};
 use serde::{Serialize, Deserialize};
 use std::fs::File;
 use std::io::prelude::*;
@@ -136,15 +136,18 @@ fn main() {
 
     rayon::ThreadPoolBuilder::new().num_threads(10).build_global().unwrap();
 
+    let start = Instant::now();
     let file_paths = if PathBuf::from(filepath_cache).exists() {
-        load_file_paths(filepath_cache).unwrap_or_else(|_| {
-            println!("Failed to load cached file paths. Reindexing...");
+        let load_start = Instant::now();
+        let paths = load_file_paths(filepath_cache).unwrap_or_else(|_| {
             Vec::new()
-        })
+        });
+        paths
     } else {
         Vec::new()
     };
 
+    let indexing_start = Instant::now();
     let index = if file_paths.is_empty() {
         let index = index_files_from_root(root, max_size);
         let paths: Vec<PathBuf> = index.keys().map(PathBuf::from).collect();
@@ -184,15 +187,15 @@ fn main() {
             .collect()
     };
 
-    println!("Number of files indexed: {}", index.len());
-
+    let search_start = Instant::now();
     let keyword = "words words words";
     let results = search_index(&index, keyword);
 
-    let ranked_results = rank_files_by_bm25(results, keyword, index.len() as f64);
-
-    println!("Ranked files:");
-    for (file, score) in ranked_results {
+    let ranking_start = Instant::now();
+    let mut ranked_results = rank_files_by_bm25(results, keyword, index.len() as f64);
+    ranked_results.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap());
+    let top_results = ranked_results.into_iter().take(3).collect::<Vec<_>>();
+    for (file, score) in top_results {
         println!("File: {}, Score: {:.4}", file.path, score);
     }
 }
