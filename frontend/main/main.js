@@ -11,6 +11,8 @@ const WebSocket = require('ws');
 // Start Express server
 require('../../backend/server');
 
+let isWindowOpen = false;
+
 const createWindow = () => {
   const { width, height } = screen.getPrimaryDisplay().workAreaSize;
 
@@ -27,9 +29,18 @@ const createWindow = () => {
       contextIsolation: false, // This is necessary to use `require` in the renderer process
     },
   });
-  win.setResizable(false);
+  win.setResizable(true);
 
-  win.loadURL("http://localhost:3000"); // Next.js frontend
+  win.loadURL("http://localhost:3000") // Next.js frontend
+    .then(() => {
+      console.log('URL loaded successfully');
+    })
+    .catch((err) => {
+      console.error('Failed to load URL:', err);
+    });
+
+  // Open the DevTools.
+  win.webContents.openDevTools();
 
   // WebSocket communication
   const ws = new WebSocket('ws://localhost:3001');
@@ -48,14 +59,16 @@ const createWindow = () => {
   ws.onclose = () => {
     console.log('WebSocket connection closed');
   };
+
+  win.on('closed', () => {
+    isWindowOpen = false;
+  });
 };
 
 app.on("ready", async () => {
   createWindow();
   isWindowOpen = true;
-});
 
-app.on("ready", () => {
   globalShortcut.register("Alt+X", () => {
     if (isWindowOpen) {
       BrowserWindow.getFocusedWindow().close();
@@ -68,7 +81,7 @@ app.on("ready", () => {
 });
 
 app.on("window-all-closed", () => {
-  if (process?.platform !== "darwin") {
-    // app.quit();
+  if (process.platform !== "darwin") {
+    app.quit();
   }
 });

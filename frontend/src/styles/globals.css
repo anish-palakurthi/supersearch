@@ -8,4 +8,6 @@
     font-weight: normal; /* Font weight */
     /* Add any other custom styling as needed */
   }
-  
+.message-item {
+  color: black;
+}

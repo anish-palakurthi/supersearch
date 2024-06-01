@@ -1,3 +1,5 @@
+const router = require('./routes/routeTest');
+
 const express = require('express');
 const http = require('http');
 const WebSocket = require('ws');
@@ -21,6 +23,9 @@ app.get('/api/data', (req, res) => {
   res.json({ message: 'Hello from the API' });
 });
 
+app.use('/router', router);
+
+
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
 
@@ -31,11 +36,17 @@ wss.on('connection', (ws) => {
 
   ws.on('message', (message) => {
     console.log(`Received message => ${message}`);
+    ws.send(JSON.stringify({ message: 'Message received, Sample Websocket message return' }));
   });
 
   ws.on('close', () => {
     console.log('Client disconnected');
   });
+
+  // Example of sending a message from the server to the client
+  setInterval(() => {
+    ws.send(JSON.stringify({ message: 'Server initiated message' }));
+  }, 5000); // Sends a message every 5 seconds
 });
 
 server.listen(port, () => {

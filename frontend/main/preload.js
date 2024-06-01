@@ -11,6 +11,11 @@ contextBridge.exposeInMainWorld("electronAPI", {
 
 });
 
+ipcRenderer.on('ws-message', (event, message) => {
+  console.log('Message from WebSocket server:', message);
+  // Handle the message as needed
+});
+
 
 
 
