@@ -16,12 +16,14 @@ const createWindow = () => {
   const { width, height } = screen.getPrimaryDisplay().workAreaSize;
 
   const win = new BrowserWindow({
-    width: 360,
-    height: 500,
+    width: 800,
+    height: 200,
     x: 0,
     y: height, // Set y position to height - window height for bottom
     frame: false,
-    transparent: true,
+    backgroundColor: '#000000', // Set background color to black
+
+    transparent: false,
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
       nodeIntegration: true,

@@ -1,4 +1,3 @@
-// src/components/SearchInput.tsx
 import { useState } from 'react';
 
 interface SearchInputProps {
@@ -18,7 +17,7 @@ const SearchInput: React.FC<SearchInputProps> = ({ onSearch }) => {
       type="text"
       value={input}
       onChange={handleChange}
-      className="w-full p-4 border-b border-gray-300 focus:outline-none"
+      className="w-full h-full p-4 border-b border-gray-300 focus:outline-none"
       placeholder="Search..."
     />
   );

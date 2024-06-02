@@ -1,4 +1,4 @@
-import  { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import SpotlightSearch from '../components/SpotlightSearch';
 
 const Home: React.FC = () => {
@@ -12,14 +12,10 @@ const Home: React.FC = () => {
   }, []);
   
   return (
-    <div className="min-h-screen h-full bg-gray-100 flex flex-col justify-center items-center">
-      <SpotlightSearch />
-      <div className="mt-4 w-full max-w-md bg-white p-4 shadow-md rounded-md">
-        <h2 className="text-xl font-semibold mb-2">WebSocket Messages</h2>
-        <p>{message}</p>
-      </div>
+    <div className="min-h-screen h-full bg-gray-900 flex flex-col justify-center items-center">
+      <SpotlightSearch className="w-full h-full" />
+      <h1 className="text-4xl font-bold text-white mt-8">{message}</h1>
     </div>
   );
 };
-
 export default Home;

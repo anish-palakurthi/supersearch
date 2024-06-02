@@ -19,7 +19,7 @@ const SpotlightSearch: React.FC = () => {
   };
 
   return (
-    <div className="spotlight-container fixed top-0 left-0 w-full h-full bg-white rounded-lg shadow-lg">
+    <div className="spotlight-container fixed top-0 left-0 w-full h-full bg-black rounded-lg shadow-lg" style={{ color: 'white' }}>
       <SearchInput onSearch={handleSearch} />
       <SearchResults results={results} />
     </div>
