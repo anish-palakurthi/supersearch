@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const router = require('./routes/routeTest');
-const native = require('../indexer/index')
+const native = require('../indexer/index');
 
 const app = express();
 const port = 3001;
@@ -20,12 +20,19 @@ app.get('/', (req, res) => {
 });
 
 app.get('/napi', (req, res) => {
-  res.send(`Sum from napi! : ${native.sum(10, 10)}`);
+  res.json({ message: `Sum from napi! : ${native.sum(10, 10)}` });
 });
 
 // API endpoint to handle client requests
 app.get('/api/messages', (req, res) => {
-  res.json({ message: 'Sample message from the server-side.' });
+  res.json(native.sum(10, 10));
+});
+
+// New search route
+app.get('/search', (req, res) => {
+  const searchQuery = req.query.q;
+  // Mock data for demonstration purposes
+  res.json(native.generateList(searchQuery));
 });
 
 app.use('/router', router);

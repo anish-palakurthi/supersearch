@@ -310,6 +310,7 @@ if (!nativeBinding) {
   throw new Error(`Failed to load native binding`)
 }
 
-const { sum } = nativeBinding
+const { sum, generateList } = nativeBinding
 
 module.exports.sum = sum
+module.exports.generateList = generateList

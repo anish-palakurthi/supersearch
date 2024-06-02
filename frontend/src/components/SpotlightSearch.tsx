@@ -1,6 +1,5 @@
-// src/components/SpotlightSearch.tsx
-
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import axios from 'axios';
 import SearchInput from './SearchInput';
 import SearchResults from './SearchResults';
 
@@ -8,14 +7,14 @@ const SpotlightSearch: React.FC = () => {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<string[]>([]);
 
-  const handleSearch = (searchQuery: string) => {
+  const handleSearch = async (searchQuery: string) => {
     setQuery(searchQuery);
-    // Simulate search results
-    setResults([
-        `Result 1 for ${searchQuery}`,
-        `Result 2 for ${searchQuery}`,
-        `Result 3 for ${searchQuery}`,
-      ]);
+    try {
+      const response = await axios.get(`http://localhost:3001/search?q=${searchQuery}`);
+      setResults(response.data); // Assuming the response is a list of strings
+    } catch (error) {
+      console.error('Error fetching search results:', error);
+    }
   };
 
   return (
