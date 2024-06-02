@@ -19,31 +19,28 @@ const createWindow = () => {
     width: 360,
     height: 500,
     x: 0,
-    y: height - 500, // Adjusted to be at the bottom but visible
+    y: height, // Set y position to height - window height for bottom
     frame: false,
     transparent: true,
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
       nodeIntegration: true,
-      contextIsolation: false, // This is necessary to use `require` in the renderer process
     },
-  });
-  win.setResizable(true);
 
-  win.loadURL("http://localhost:3000") // Next.js frontend
-    .then(() => {
-      console.log('URL loaded successfully');
-    })
-    .catch((err) => {
-      console.error('Failed to load URL:', err);
+  });
+  win.setResizable(false);
+
+  if (app.isPackaged) {
+    appServe(win).then(() => {
+      win.loadURL("app://-");
     });
-
-  // Open the DevTools.
-  win.webContents.openDevTools();
-
-  win.on('closed', () => {
-    isWindowOpen = false;
-  });
+  } else {
+    win.loadURL("http://localhost:3000");
+    //win.webContents.openDevTools();
+    win.webContents.on("did-fail-load", (e, code, desc) => {
+      win.webContents.reloadIgnoringCache();
+    });
+  }
 };
 
 app.on("ready", async () => {
