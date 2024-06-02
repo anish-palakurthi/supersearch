@@ -15,5 +15,11 @@
   "devDependencies": {
     "cors": "^2.8.5",
     "ws": "^8.17.0"
-  }
+  },
+  "workspaces": [
+    "backend",
+    "frontend",
+    "indexer"
+  ],
+  "packageManager": "yarn@4.2.2"
 }
