@@ -1,5 +1,3 @@
-// src/components/SearchResults.tsx
-// src/components/SearchResults.tsx
 import type { FC } from 'react';
 import SearchResultItem from './SearchResultItem';
 
@@ -9,11 +7,13 @@ interface SearchResultsProps {
 
 const SearchResults: React.FC<SearchResultsProps> = ({ results }) => {
   return (
-    <ul className="max-h-64 overflow-y-auto">
-      {results.map((result) => (
-        <SearchResultItem key={result} result={result} />
-      ))}
-    </ul>
+    <div className="search-results-container max-h-64 overflow-y-auto">
+      <ul className="w-full">
+        {results.map((result) => (
+          <SearchResultItem key={result} result={result} />
+        ))}
+      </ul>
+    </div>
   );
 };
 

@@ -22,6 +22,7 @@ const Home: React.FC = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-black">
+      
       <div className="w-full p-4">
         <SpotlightSearch />
       </div>

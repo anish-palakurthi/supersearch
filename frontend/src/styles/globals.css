@@ -11,3 +11,23 @@
 .message-item {
   color: black;
 }
+
+::-webkit-scrollbar {
+  display: none;
+}
+
+/* Hide scroll bar for all elements */
+* {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+/* Ensure you have these classes in your global CSS or Tailwind configuration */
+.search-results-container {
+  max-height: 256px; /* This corresponds to max-h-64 in Tailwind */
+  overflow-y: auto;
+}
+
+.search-results-container ul {
+  width: 100%;
+}

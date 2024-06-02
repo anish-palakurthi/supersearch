@@ -17,9 +17,9 @@ const createWindow = () => {
 
   const win = new BrowserWindow({
     width: 800,
-    height: 400,
+    height: 300,
     x: (width - 800) / 2,
-    y: (height - 400) / 2, // Set y position to height - window height for bottom
+    y: (height - 300) / 2, // Set y position to height - window height for bottom
     frame: false,
     backgroundColor: '#000000', // Set background color to black
 

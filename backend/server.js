@@ -38,6 +38,12 @@ app.get('/search', (req, res) => {
   const dummyFilePaths = [
     '/Users/anishpalakurthi/supersearch/README.md',
     '/Users/anishpalakurthi/supersearch/testFile.txt',
+    '/Users/anishpalakurthi/supersearch/src/index.js',
+    '/Users/anishpalakurthi/supersearch/src/routes/routeTest.js',
+    '/Users/anishpalakurthi/supersearch/src/routes/routeTest.spec.js',
+    '/Users/anishpalakurthi/supersearch/src/index.spec.js',
+    '/Users/anishpalakurthi/supersearch/src/index.spec.js',
+
 
   ];
 
@@ -55,7 +61,7 @@ app.get('/open-file', (req, res) => {
     return res.status(400).send('Invalid file path');
   }
 
-  const appleScriptPath = ('/Users/anishpalakurthi/supersearch/backend/openFile.scpt');
+  const appleScriptPath = path.join(__dirname, 'openFile.scpt');;
   const appleScriptCommand = `
     osascript ${appleScriptPath} "${filePath}"
   `;

@@ -10,7 +10,7 @@ const SearchResultItem: React.FC<SearchResultItemProps> = ({ result }) => {
   return (
     <button 
       type="button"
-      className="p-4 hover:bg-gray-100 cursor-pointer text-left w-full" 
+      className="p-4 hover:bg-gray-500 cursor-pointer text-left w-full" 
       onClick={handleClick}
       onKeyUp={(e) => e.key === 'Enter' && handleClick()}
     >
