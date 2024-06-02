@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const router = require('./routes/routeTest');
+const native = require('../indexer/index')
 
 const app = express();
 const port = 3001;
@@ -16,6 +17,10 @@ app.use((req, res, next) => {
 // Example route
 app.get('/', (req, res) => {
   res.send('Hello from the backend server!');
+});
+
+app.get('/napi', (req, res) => {
+  res.send(`Sum from napi! : ${native.sum(10, 10)}`);
 });
 
 // API endpoint to handle client requests
