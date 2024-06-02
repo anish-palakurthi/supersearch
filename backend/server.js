@@ -55,7 +55,7 @@ app.get('/open-file', (req, res) => {
     return res.status(400).send('Invalid file path');
   }
 
-  const appleScriptPath = path.resolve(__dirname, 'openFile.scpt');
+  const appleScriptPath = ('/Users/anishpalakurthi/supersearch/backend/openFile.scpt');
   const appleScriptCommand = `
     osascript ${appleScriptPath} "${filePath}"
   `;
