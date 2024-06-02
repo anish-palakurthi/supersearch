@@ -1,2 +1,0 @@
-- clean up repo
-- render app properly
