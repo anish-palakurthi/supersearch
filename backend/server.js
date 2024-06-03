@@ -1,6 +1,5 @@
 const express = require('express');
 const cors = require('cors');
-const router = require('./routes/routeTest');
 const native = require('../indexer/index');
 const { exec } = require('node:child_process');
 const path = require('node:path'); // Add this line at the top of your file
@@ -24,11 +23,6 @@ app.get('/', (req, res) => {
 
 app.get('/napi', (req, res) => {
   res.json({ message: `Sum from napi! : ${native.sum(10, 10)}` });
-});
-
-// API endpoint to handle client requests
-app.get('/api/messages', (req, res) => {
-  res.json(native.sum(10, 10));
 });
 
 // New search route
@@ -75,8 +69,6 @@ app.get('/open-file', (req, res) => {
   });
 });
 
-
-app.use('/router', router);
 
 const server = app.listen(port, () => {
   console.log(`Server listening at http://localhost:${port}`);
