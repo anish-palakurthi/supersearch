@@ -1,3 +1,5 @@
+import axios from 'axios';
+
 interface SearchResultItemProps {
   result: string;
 }
@@ -21,11 +23,11 @@ const SearchResultItem: React.FC<SearchResultItemProps> = ({ result }) => {
 
 const openFile = async (filePath: string) => {
   try {
-    const response = await fetch(`http://localhost:3001/open-file?filePath=${(filePath)}`);
-    if (!response.ok) {
+    const response = await axios.get(`http://localhost:3001/open-file?filePath=${(filePath)}`);
+    if (response.status !== 200) {
       throw new Error('Error opening file');
     }
-    const fileContent = await response.text();
+    const fileContent = response.data;
     console.log(`File content: ${fileContent}`);
   } catch (error) {
     console.error(error);

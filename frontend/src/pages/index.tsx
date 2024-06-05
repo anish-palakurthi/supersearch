@@ -1,17 +1,17 @@
 import { useEffect, useState } from 'react';
 import SpotlightSearch from '@/components/SpotlightSearch';
-
+import axios from 'axios';
 const Home: React.FC = () => {
   const [message, setMessage] = useState<string>('');
   const [searchTerm, setSearchTerm] = useState<string>('');
 
   useEffect(() => {
-    fetch('http://localhost:3001/napi')
+    axios.get('http://localhost:3001/napi')
       .then(response => {
-        if (!response.ok) {
+        if (response.status !== 200) {
           throw new Error('Network response was not ok');
         }
-        return response.json();
+        return response.data;
       })
       .then(data => {
         console.log('Fetched data:', data); // Debugging log

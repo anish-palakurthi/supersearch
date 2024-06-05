@@ -3,6 +3,11 @@ Supersearch transforms native Spotlight search into a powerful tool, supporting 
 
 Supersearch is built with napi, Rust, Next.js, and Electron.
 
+To run Supersearch locally:
+`npm install`
+`cd indexer && yarn install`
+`cd frontend && npm run dev`
+
 Next up:
 - Embedding-based word to image/video search
 - Find those texts. No more keyword matching in iMessages!
