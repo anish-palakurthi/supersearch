@@ -5,7 +5,6 @@ Supersearch is built with napi, Rust, Next.js, and Electron.
 
 To run Supersearch locally:
 `npm install`
-`cd indexer && yarn install`
 `cd frontend && npm run dev`
 
 Next up:
