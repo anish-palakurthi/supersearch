@@ -4,12 +4,13 @@ use std::path::PathBuf;
 use walkdir::WalkDir;
 use regex::Regex;
 use rayon::prelude::*;
+use std::sync::{Arc, Mutex};
 use std::time::{SystemTime, Duration, Instant};
 use serde::{Serialize, Deserialize};
 use std::fs::File;
 use std::io::prelude::*;
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 struct FileIndex {
     path: String,
     content: Option<String>,
@@ -31,7 +32,15 @@ fn load_file_paths(filename: &str) -> std::io::Result<Vec<PathBuf>> {
     Ok(paths.iter().map(|p| PathBuf::from(p)).collect())
 }
 
-fn index_files_from_root(root: &str, max_size: u64) -> HashMap<String, FileIndex> {
+fn bm25_score(doc_len: f64, avg_doc_len: f64, term_freq: f64, doc_freq: f64, num_docs: f64) -> f64 {
+    let k1 = 1.5;
+    let b = 0.75;
+    let idf = ((num_docs - doc_freq + 0.5) / (doc_freq + 0.5)).ln();
+    let tf = (term_freq * (k1 + 1.0)) / (term_freq + k1 * (1.0 - b + b * (doc_len / avg_doc_len)));
+    idf * tf
+}
+
+fn index_files_from_root(root: &str, max_size: u64, keyword: &str) -> (HashMap<String, FileIndex>, Vec<(f64, f64)>) {
     let file_paths: Vec<PathBuf> = WalkDir::new(root)
         .into_iter()
         .filter_map(|e| e.ok())
@@ -40,9 +49,11 @@ fn index_files_from_root(root: &str, max_size: u64) -> HashMap<String, FileIndex
         .collect();
 
     let now = SystemTime::now();
-    let last_30_days = now - Duration::from_secs(30 * 24 * 60 * 60);
+    let last_30_days = now - Duration::from_secs(7 * 24 * 60 * 60);
+    let re = Regex::new(keyword).unwrap();
 
-    file_paths
+    let file_metadata = Arc::new(Mutex::new(vec![]));
+    let index: HashMap<String, FileIndex> = file_paths
         .par_iter()
         .filter_map(|path| {
             let path_str = path.to_string_lossy().to_string();
@@ -53,10 +64,17 @@ fn index_files_from_root(root: &str, max_size: u64) -> HashMap<String, FileIndex
 
                 if accessed_recently && metadata.len() <= max_size {
                     if let Ok(content) = fs::read_to_string(&path) {
-                        Some((path_str.clone(), FileIndex {
+                        let file_index = FileIndex {
                             path: path_str.clone(),
-                            content: Some(content),
-                        }))
+                            content: Some(content.clone()),
+                        };
+                        let doc_len = content.len() as f64;
+                        let term_freq = re.find_iter(&content).count() as f64;
+                        {
+                            let mut file_metadata = file_metadata.lock().unwrap();
+                            file_metadata.push((doc_len, term_freq));
+                        }
+                        Some((path_str.clone(), file_index))
                     } else {
                         Some((path_str.clone(), FileIndex {
                             path: path_str.clone(),
@@ -70,76 +88,41 @@ fn index_files_from_root(root: &str, max_size: u64) -> HashMap<String, FileIndex
                 None
             }
         })
-        .collect()
+        .collect();
+
+    let file_metadata = Arc::try_unwrap(file_metadata).unwrap().into_inner().unwrap();
+    (index, file_metadata)
 }
 
-fn search_index<'a>(index: &'a HashMap<String, FileIndex>, keyword: &'a str) -> Vec<&'a FileIndex> {
+fn rank_files_by_bm25(index: &HashMap<String, FileIndex>, keyword: &str, file_metadata: &[(f64, f64)]) -> Vec<(FileIndex, f64)> {
     let re = Regex::new(keyword).unwrap();
-    index.values()
-        .filter(|file_index| {
-            if let Some(ref content) = file_index.content {
-                re.is_match(content)
-            } else {
-                false
-            }
-        })
-        .collect()
-}
+    let num_docs = file_metadata.len() as f64;
+    let avg_doc_len: f64 = file_metadata.iter().map(|(len, _)| *len).sum::<f64>() / num_docs;
+    let doc_freq: f64 = file_metadata.iter().filter(|(_, term_freq)| *term_freq > 0.0).count() as f64;
 
-fn bm25_score(doc_len: f64, avg_doc_len: f64, term_freq: f64, doc_freq: f64, num_docs: f64) -> f64 {
-    let k1 = 1.5;
-    let b = 0.75;
-    let idf = ((num_docs - doc_freq + 0.5) / (doc_freq + 0.5)).ln();
-    let tf = (term_freq * (k1 + 1.0)) / (term_freq + k1 * (1.0 - b + b * (doc_len / avg_doc_len)));
-    idf * tf
-}
+    let mut results = vec![];
 
-fn rank_files_by_bm25<'a>(files: Vec<&'a FileIndex>, keyword: &'a str, num_docs: f64) -> Vec<(&'a FileIndex, f64)> {
-    let re = Regex::new(keyword).unwrap();
-    let mut doc_lengths = Vec::new();
-    let mut doc_freq = 0.0;
-
-    for file in &files {
-        if let Some(ref content) = file.content {
-            let doc_len = content.len() as f64;
-            doc_lengths.push(doc_len);
-            if re.is_match(content) {
-                doc_freq += 1.0;
-            }
+    for (file_index, (doc_len, term_freq)) in index.values().zip(file_metadata.iter()) {
+        if *term_freq > 0.0 {
+            let score = bm25_score(*doc_len, avg_doc_len, *term_freq, doc_freq, num_docs);
+            results.push((file_index.clone(), score));
         }
     }
 
-    let avg_doc_len: f64 = doc_lengths.iter().sum::<f64>() / doc_lengths.len() as f64;
-
-    files.into_iter()
-        .filter_map(|file_index| {
-            if let Some(ref content) = file_index.content {
-                let doc_len = content.len() as f64;
-                let term_freq = re.find_iter(content).count() as f64;
-                if term_freq > 0.0 {
-                    let score = bm25_score(doc_len, avg_doc_len, term_freq, doc_freq, num_docs);
-                    Some((file_index, score))
-                } else {
-                    None
-                }
-            } else {
-                None
-            }
-        })
-        .collect::<Vec<(&FileIndex, f64)>>()
+    results.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap());
+    results.into_iter().take(3).collect()
 }
 
-fn main() {
+fn do_it(keyword: &str) -> Vec<(FileIndex, f64)> {
     let root = "/Users/adityarai/Documents";
     let max_size = 1024 * 1024;
     let filepath_cache = "filepaths.json";
 
     rayon::ThreadPoolBuilder::new().num_threads(10).build_global().unwrap();
 
-    let start = Instant::now();
     let file_paths = if PathBuf::from(filepath_cache).exists() {
-        let load_start = Instant::now();
         let paths = load_file_paths(filepath_cache).unwrap_or_else(|_| {
+            println!("Failed to load cached file paths. Reindexing...");
             Vec::new()
         });
         paths
@@ -147,55 +130,27 @@ fn main() {
         Vec::new()
     };
 
-    let indexing_start = Instant::now();
-    let index = if file_paths.is_empty() {
-        let index = index_files_from_root(root, max_size);
+    let (index, file_metadata) = if file_paths.is_empty() {
+        let (index, file_metadata) = index_files_from_root(root, max_size, &keyword);
         let paths: Vec<PathBuf> = index.keys().map(PathBuf::from).collect();
         save_file_paths(&paths, filepath_cache).expect("Failed to save file paths");
-        index
+        (index, file_metadata)
     } else {
-        let now = SystemTime::now();
-        let last_30_days = now - Duration::from_secs(30 * 24 * 60 * 60);
-
-        file_paths.par_iter()
-            .filter_map(|path| {
-                let path_str = path.to_string_lossy().to_string();
-                if let Ok(metadata) = fs::metadata(&path) {
-                    let accessed_recently = metadata.accessed()
-                        .map(|time| time > last_30_days)
-                        .unwrap_or(false);
-
-                    if accessed_recently && metadata.len() <= max_size {
-                        if let Ok(content) = fs::read_to_string(&path) {
-                            Some((path_str.clone(), FileIndex {
-                                path: path_str.clone(),
-                                content: Some(content),
-                            }))
-                        } else {
-                            Some((path_str.clone(), FileIndex {
-                                path: path_str.clone(),
-                                content: None,
-                            }))
-                        }
-                    } else {
-                        None
-                    }
-                } else {
-                    None
-                }
-            })
-            .collect()
+        let (index, file_metadata) = index_files_from_root(root, max_size, &keyword);
+        let paths: Vec<PathBuf> = index.keys().map(PathBuf::from).collect();
+        save_file_paths(&paths, filepath_cache).expect("Failed to save file paths");
+        (index, file_metadata)
     };
 
-    let search_start = Instant::now();
-    let keyword = "words words words";
-    let results = search_index(&index, keyword);
+    let results = rank_files_by_bm25(&index, &keyword, &file_metadata);
+    results
+}
 
-    let ranking_start = Instant::now();
-    let mut ranked_results = rank_files_by_bm25(results, keyword, index.len() as f64);
-    ranked_results.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap());
-    let top_results = ranked_results.into_iter().take(3).collect::<Vec<_>>();
-    for (file, score) in top_results {
-        println!("File: {}, Score: {:.4}", file.path, score);
+fn main() {
+    let keyword = "words words to search";
+    let results = do_it(keyword);
+    for (file_index, score) in results {
+        println!("Score: {}", score);
+        println!("Path: {}", file_index.path);
     }
 }
