@@ -113,8 +113,7 @@ fn rank_files_by_bm25(index: &HashMap<String, FileIndex>, keyword: &str, file_me
     results.into_iter().take(3).collect()
 }
 
-fn do_it(keyword: &str) -> Vec<(FileIndex, f64)> {
-    let root = "/Users/adityarai/Documents";
+fn do_it(keyword: &str, root: &str) -> Vec<(FileIndex, f64)> {
     let max_size = 1024 * 1024;
     let filepath_cache = "filepaths.json";
 
@@ -148,7 +147,8 @@ fn do_it(keyword: &str) -> Vec<(FileIndex, f64)> {
 
 fn main() {
     let keyword = "words words to search";
-    let results = do_it(keyword);
+    let root = "/Users/adityarai/Documents";
+    let results = do_it(keyword, root);
     for (file_index, score) in results {
         println!("Score: {}", score);
         println!("Path: {}", file_index.path);
