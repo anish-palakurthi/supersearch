@@ -27,22 +27,9 @@ app.get('/napi', (req, res) => {
 
 app.get('/search', (req, res) => {
   const searchQuery = req.query.q;
-
-  const dummyFilePaths = [
-    '/Users/anishpalakurthi/supersearch/README.md',
-    '/Users/anishpalakurthi/supersearch/testFile.txt',
-    '/Users/anishpalakurthi/supersearch/src/index.js',
-    '/Users/anishpalakurthi/supersearch/src/routes/routeTest.js',
-    '/Users/anishpalakurthi/supersearch/src/routes/routeTest.spec.js',
-    '/Users/anishpalakurthi/supersearch/src/index.spec.js',
-    '/Users/anishpalakurthi/supersearch/src/index.spec.js',
-
-
-  ];
-
-  res.json(dummyFilePaths);
   // Mock data for demonstration purposes
-  // res.json(native.generateList(searchQuery));
+  res.json(native.do_it(searchQuery));
+  
 });
 
 
