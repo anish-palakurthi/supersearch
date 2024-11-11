@@ -7,6 +7,4 @@ To run Supersearch locally:
 `npm install`
 `cd frontend && npm run dev`
 
-Next up:
-- Embedding-based word to image/video search
-- Find those texts. No more keyword matching in iMessages!
+We use hyperoptimized search with distributed sharding, multi-layer concurrency, virtual memory mappings, high-performant data structures, producer-consumer buffer reading, and more. Take a look at the `indexer` directory for the code.
