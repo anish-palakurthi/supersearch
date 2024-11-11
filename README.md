@@ -7,4 +7,4 @@ To run Supersearch locally:
 `npm install`
 `cd frontend && npm run dev`
 
-We use hyperoptimized search with distributed sharding, multi-layer concurrency, virtual memory mappings, high-performant data structures, producer-consumer buffer reading, and more. Take a look at the `indexer` directory for the code.
+We use hyperoptimized search with distributed sharding, multi-layer concurrency, virtual memory mappings, high-performant data structures, producer-consumer buffer reading, and more to achieve orders of magnitude faster index generation, index search, and smaller storage size. Take a look at the `indexer` directory for the code.
